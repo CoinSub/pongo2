@@ -132,10 +132,19 @@ func (set *TemplateSet) BanFilter(name string) error {
 }
 
 func (set *TemplateSet) resolveTemplate(tpl *Template, path string) (name string, loader TemplateLoader, fd io.Reader, err error) {
-	// iterate over loaders until we appear to have a valid template
+	// First try to resolve from the current template's directory
 	for _, loader = range set.loaders {
 		name = set.resolveFilenameForLoader(loader, tpl, path)
 		fd, err = loader.Get(name)
+		if err == nil {
+			return
+		}
+	}
+
+	// If no template was found, fallback to the global loaders
+	for _, globalLoader := range set.loaders {
+		name = set.resolveFilenameForLoader(globalLoader, nil, path)
+		fd, err = globalLoader.Get(name)
 		if err == nil {
 			return
 		}
